@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perritos API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .form-section {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+        }
+        .form-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .form-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[type="text"],
+        input[type="number"] {
+            flex: 1;
+            min-width: 150px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .btn-add {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-add:hover {
+            background-color: #45a049;
+        }
+        .btn-update {
+            background-color: #2196F3;
+            color: white;
+        }
+        .btn-update:hover {
+            background-color: #0b7dda;
+        }
+        .btn-cancel {
+            background-color: #999;
+            color: white;
+        }
+        .btn-cancel:hover {
+            background-color: #777;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .btn-edit, .btn-delete {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        .btn-edit {
+            background-color: #2196F3;
+            color: white;
+        }
+        .btn-edit:hover {
+            background-color: #0b7dda;
+        }
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+        }
+        .btn-delete:hover {
+            background-color: #da190b;
+        }
+        .hidden {
+            display: none;
+        }
+        .message {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐕 Perritos</h1>
+        <h2>Todos tus perritos favoritos en una sola página</h2>
+        
+        <div id="mensaje" class="message"></div>
+
+        <div class="form-section">
+            <h3>Agregar Nuevo Perro</h3>
+            <div class="form-group">
+                <input type="text" id="nombre" placeholder="Nombre" />
+                <input type="text" id="raza" placeholder="Raza" />
+                <input type="number" id="edad" placeholder="Edad" />
+                <button class="btn-add" onclick="agregarPerro()">Agregar</button>
+            </div>
+        </div>
+
+        <div id="formularioEdicion" class="form-section hidden">
+            <h3>Editar Perro</h3>
+            <div class="form-group">
+                <input type="text" id="editNombre" placeholder="Nombre" />
+                <input type="text" id="editRaza" placeholder="Raza" />
+                <input type="number" id="editEdad" placeholder="Edad" />
+                <button class="btn-update" onclick="guardarEdicion()">Guardar Cambios</button>
+                <button class="btn-cancel" onclick="cancelarEdicion()">Cancelar</button>
+            </div>
+        </div>
+
+        <table id="tablaPerros">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Nombre</th>
+                    <th>Raza</th>
+                    <th>Edad</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let perroEnEdicion = null;
+        const API_URL = 'http://localhost:3000/perros';
+
+        async function cargarPerros() {
+            try {
+                const response = await fetch(API_URL);
+                const perros = await response.json();
+                const tbody = document.querySelector('#tablaPerros tbody');
+                tbody.innerHTML = '';
+
+                perros.forEach(perro => {
+                    const fila = tbody.insertRow();
+                    fila.insertCell().textContent = perro.id;
+                    fila.insertCell().textContent = perro.nombre;
+                    fila.insertCell().textContent = perro.raza;
+                    fila.insertCell().textContent = perro.edad;
+                    
+                    const celdaAcciones = fila.insertCell();
+                    const btnEditar = document.createElement('button');
+                    btnEditar.className = 'btn-edit';
+                    btnEditar.textContent = '✏️ Editar';
+                    btnEditar.onclick = () => editarPerro(perro);
+
+                    const btnEliminar = document.createElement('button');
+                    btnEliminar.className = 'btn-delete';
+                    btnEliminar.textContent = '🗑️ Eliminar';
+                    btnEliminar.onclick = () => eliminarPerro(perro.id);
+
+                    celdaAcciones.appendChild(btnEditar);
+                    celdaAcciones.appendChild(btnEliminar);
+                });
+            } catch (error) {
+                mostrarMensaje('Error al cargar los perros: ' + error.message, 'error');
+            }
+        }
+
+        async function agregarPerro() {
+            const nombre = document.getElementById('nombre').value.trim();
+            const raza = document.getElementById('raza').value.trim();
+            const edad = document.getElementById('edad').value.trim();
+
+            if (!nombre || !raza || !edad) {
+                mostrarMensaje('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombre: nombre,
+                        raza: raza,
+                        edad: parseInt(edad)
+                    })
+                });
+
+                if (response.ok) {
+                    document.getElementById('nombre').value = '';
+                    document.getElementById('raza').value = '';
+                    document.getElementById('edad').value = '';
+                    mostrarMensaje('Perro agregado correctamente ✓', 'success');
+                    cargarPerros();
+                } else {
+                    mostrarMensaje('Error al agregar el perro', 'error');
+                }
+            } catch (error) {
+                mostrarMensaje('Error: ' + error.message, 'error');
+            }
+        }
+
+        function editarPerro(perro) {
+            perroEnEdicion = perro;
+            document.getElementById('editNombre').value = perro.nombre;
+            document.getElementById('editRaza').value = perro.raza;
+            document.getElementById('editEdad').value = perro.edad;
+            document.getElementById('formularioEdicion').classList.remove('hidden');
+        }
+
+        async function guardarEdicion() {
+            const nombre = document.getElementById('editNombre').value.trim();
+            const raza = document.getElementById('editRaza').value.trim();
+            const edad = document.getElementById('editEdad').value.trim();
+
+            if (!nombre || !raza || !edad) {
+                mostrarMensaje('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/${perroEnEdicion.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombre: nombre,
+                        raza: raza,
+                        edad: parseInt(edad)
+                    })
+                });
+
+                if (response.ok) {
+                    mostrarMensaje('Perro actualizado correctamente ✓', 'success');
+                    cancelarEdicion();
+                    cargarPerros();
+                } else {
+                    mostrarMensaje('Error al actualizar el perro', 'error');
+                }
+            } catch (error) {
+                mostrarMensaje('Error: ' + error.message, 'error');
+            }
+        }
+
+        function cancelarEdicion() {
+            perroEnEdicion = null;
+            document.getElementById('formularioEdicion').classList.add('hidden');
+        }
+
+        async function eliminarPerro(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar este perro?')) {
+                try {
+                    const response = await fetch(`${API_URL}/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        mostrarMensaje('Perro eliminado correctamente ✓', 'success');
+                        cargarPerros();
+                    } else {
+                        mostrarMensaje('Error al eliminar el perro', 'error');
+                    }
+                } catch (error) {
+                    mostrarMensaje('Error: ' + error.message, 'error');
+                }
+            }
+        }
+
+        function mostrarMensaje(texto, tipo) {
+            const mensaje = document.getElementById('mensaje');
+            mensaje.textContent = texto;
+            mensaje.className = 'message ' + tipo;
+            setTimeout(() => {
+                mensaje.className = 'message';
+            }, 3000);
+        }
+
+        window.onload = cargarPerros;
+    </script>
+</body>
+</html>
