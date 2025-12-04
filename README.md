@@ -1,6 +1,6 @@
 # 🐕 API Perritos
 
-Una aplicación web simple que permite gestionar una lista de perros con operaciones CRUD (Crear, Leer, Actualizar, Eliminar).
+Una aplicación web simple que permite gestionar una lista de perros con operaciones CRUD (Crear, Leer, Actualizar, Eliminar, Patch).
 
 ## 📋 Descripción
 
@@ -13,6 +13,7 @@ La aplicación permite:
 - ✅ Agregar nuevos perros
 - ✅ Editar información de perros existentes
 - ✅ Eliminar perros
+- ✅ Cambiar atributos del objeto perros
 
 ## 🛠️ Requisitos Previos
 
@@ -166,5 +167,5 @@ ISC
 Benjamin Dalmau
 
 ---
-
+Todos los derechos reservados - Benjamin Dalmau - 2025
 ¿Necesitas ayuda? Abre un issue en el repositorio.
